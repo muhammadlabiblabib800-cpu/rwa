@@ -1,0 +1,22 @@
+{
+"short_name": "Labib",
+"name": "Labib Financial App",
+"icons": [
+{
+"src": "icon-192.png",
+"type": "image/png",
+"sizes": "192x192"
+},
+{
+"src": "icon-512.png",
+"type": "image/png",
+"sizes": "512x512"
+}
+],
+"start_url": ".",
+"background_color": "#ffffff",
+"theme_color": "#000000",
+"display": "standalone",
+"orientation": "portrait",
+"description": "Labib Financial App - Kelola dan pantau keuangan Anda dengan mudah."
+}

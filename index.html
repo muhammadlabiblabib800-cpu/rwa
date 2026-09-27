@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keuangan Labib</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            appBg: 'var(--color-bg)',
+            appCard: 'var(--color-card)',
+            appTextPrimary: 'var(--color-text-primary)',
+            appTextSecondary: 'var(--color-text-secondary)',
+            appTextMuted: 'var(--color-text-muted)',
+            appBorder: 'var(--color-border)',
+            appAccent: '#B8F264',
+            appAccentHover: '#a3e645',
+            appIncome: '#16a34a',
+            appIncomeBg: 'var(--color-income-bg)',
+            appExpense: '#dc2626',
+            appExpenseBg: 'var(--color-expense-bg)',
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          boxShadow: {
+            appCard: '0 4px 20px rgba(0,0,0,0.03)',
+            appCardHover: '0 8px 30px rgba(0,0,0,0.06)',
+            floating: '0 10px 30px rgba(0,0,0,0.08)',
+          },
+          borderRadius: {
+            'card': '24px',
+            'button': '16px',
+            'pill': '9999px',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    :root {
+      --color-bg: #F7F7F5;
+      --color-card: #FFFFFF;
+      --color-text-primary: #111111;
+      --color-text-secondary: #777777;
+      --color-text-muted: #A0A0A0;
+      --color-border: #EEEEEE;
+      --color-income-bg: #f0fdf4;
+      --color-expense-bg: #fef2f2;
+    }
+    .dark {
+      --color-bg: #0F172A;
+      --color-card: #1E293B;
+      --color-text-primary: #F8FAFC;
+      --color-text-secondary: #94A3B8;
+      --color-text-muted: #64748B;
+      --color-border: #334155;
+      --color-income-bg: #064e3b;
+      --color-expense-bg: #7f1d1d;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 9999px; }
+    .dark ::-webkit-scrollbar-thumb { background: #334155; }
+    
+    .view-panel { transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; }
+    .view-panel.hidden-panel { display: none; opacity: 0; transform: translateY(8px); }
+    .view-panel.active-panel { display: block; opacity: 1; transform: translateY(0); }
+
+    .chart-mode-btn { color: var(--color-text-secondary); background: transparent; }
+    .chart-mode-btn.active {
+      background: #0F5132;
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(15, 81, 50, 0.28);
+    }
+    .chart-bar-idle {
+      background: linear-gradient(180deg, rgba(22, 163, 74, 0.42) 0%, rgba(22, 163, 74, 0.06) 100%);
+    }
+    .dark .chart-bar-idle {
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.50) 0%, rgba(34, 197, 94, 0.08) 100%);
+    }
+    .chart-col:hover .chart-bar-idle {
+      background: linear-gradient(180deg, rgba(22, 163, 74, 0.68) 0%, rgba(22, 163, 74, 0.16) 100%);
+    }
+    .chart-bar-active {
+      background: linear-gradient(180deg, #16A34A 0%, #0F5132 100%);
+      box-shadow: 0 12px 24px -8px rgba(15, 81, 50, 0.65);
+    }
+    .chart-bar-empty { background: var(--color-border); }
+    .chart-tooltip {
+      background: #111111;
+      border-radius: 16px;
+      padding: 12px 14px;
+      min-width: 180px;
+      box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.45);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .dark .chart-tooltip {
+      background: #050505;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+  </style>
+</head>
+<body class="bg-appBg text-appTextPrimary font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-appAccent selection:text-appTextPrimary transition-colors duration-200">
+
+  <div class="w-full max-w-[1300px] mx-auto min-h-screen flex flex-col md:flex-row relative">
+
+    <aside class="hidden md:flex flex-col w-64 lg:w-72 p-6 border-r border-appBorder sticky top-0 h-screen justify-between bg-appBg z-20">
+      <div>
+        <div class="flex items-center gap-3 px-3 py-2 mb-8">
+          <div class="w-10 h-10 rounded-2xl bg-appAccent flex items-center justify-center font-bold text-lg text-black shadow-sm">L</div>
+          <div>
+            <h1 class="font-bold text-lg tracking-tight leading-none text-appTextPrimary">Labib</h1>
+            <span class="text-xs text-appTextSecondary">Keuangan Pribadi</span>
+          </div>
+        </div>
+
+        <nav class="space-y-2">
+          <button onclick="switchTab('home')" id="nav-desktop-home" class="nav-desktop-btn active w-full flex items-center gap-3 px-4 py-3.5 rounded-button text-sm font-semibold transition-all bg-appAccent text-black">
+            <i data-lucide="layout-grid" class="w-5 h-5"></i> Beranda
+          </button>
+          <button onclick="switchTab('transactions')" id="nav-desktop-transactions" class="nav-desktop-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-button text-sm font-medium text-appTextSecondary hover:text-appTextPrimary hover:bg-appCard transition-all">
+            <i data-lucide="arrow-left-right" class="w-5 h-5"></i> Transaksi
+          </button>
+          <button onclick="switchTab('assets')" id="nav-desktop-assets" class="nav-desktop-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-button text-sm font-medium text-appTextSecondary hover:text-appTextPrimary hover:bg-appCard transition-all">
+            <i data-lucide="wallet" class="w-5 h-5"></i> Aset Saya
+          </button>
+          <button onclick="switchTab('statistics')" id="nav-desktop-statistics" class="nav-desktop-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-button text-sm font-medium text-appTextSecondary hover:text-appTextPrimary hover:bg-appCard transition-all">
+            <i data-lucide="pie-chart" class="w-5 h-5"></i> Statistik
+          </button>
+          <button onclick="switchTab('profile')" id="nav-desktop-profile" class="nav-desktop-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-button text-sm font-medium text-appTextSecondary hover:text-appTextPrimary hover:bg-appCard transition-all">
+            <i data-lucide="user" class="w-5 h-5"></i> Profil Saya
+          </button>
+        </nav>
+      </div>
+
+      <div class="bg-appCard p-5 rounded-card shadow-appCard border border-appBorder">
+        <div class="w-8 h-8 rounded-xl bg-appBg flex items-center justify-center mb-3">
+          <i data-lucide="sparkles" class="w-4 h-4 text-appTextPrimary"></i>
+        </div>
+        <h4 class="text-sm font-semibold mb-1 text-appTextPrimary">Aksi Cepat</h4>
+        <p class="text-xs text-appTextSecondary mb-4">Catat transaksi keuangan Anda.</p>
+        <button onclick="openTxModal()" class="w-full bg-appAccent hover:bg-appAccentHover text-black font-semibold text-xs py-3 px-4 rounded-button transition-all shadow-sm flex items-center justify-center gap-2">
+          <i data-lucide="plus" class="w-4 h-4"></i> Tambah Catatan
+        </button>
+      </div>
+    </aside>
+
+    <main class="flex-1 min-w-0 pb-28 md:pb-12 pt-4 md:pt-8 px-4 sm:px-6 lg:px-8 max-w-5xl">
+
+      <header class="flex items-center justify-between mb-6 md:mb-8">
+        <div class="flex items-center gap-3 cursor-pointer group" onclick="switchTab('profile')">
+          <img id="user-avatar-header" src="..." alt="Foto Profil" class="w-11 h-11 rounded-full object-cover border-2 border-appAccent shadow-sm group-hover:scale-105 transition-transform" />
+          <div>
+            <span class="text-xs font-medium text-appTextSecondary block">Selamat datang kembali,</span>
+            <h2 id="header-user-name" class="text-xl md:text-2xl font-bold tracking-tight text-appTextPrimary group-hover:text-appAccent transition-colors">Labib</h2>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="switchTab('profile')" class="w-10 h-10 rounded-full bg-appCard border border-appBorder flex items-center justify-center text-appTextPrimary shadow-appCard hover:border-appAccent transition-colors">
+            <i data-lucide="user" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </header>
+
+      <section id="view-home" class="view-panel active-panel space-y-6">
+        <div class="bg-appCard p-6 sm:p-8 rounded-card border border-appBorder shadow-appCard relative overflow-hidden">
+          <div class="absolute -top-12 -right-12 w-48 h-48 bg-appAccent/20 rounded-full blur-2xl pointer-events-none"></div>
+
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium uppercase tracking-wider text-appTextSecondary">Total Saldo Bersih</span>
+            <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-pill bg-appIncomeBg text-appIncome">
+              <i data-lucide="trending-up" class="w-3 h-3"></i> Aset Aktif
+            </span>
+          </div>
+
+          <div class="mb-6">
+            <h1 id="hero-total-balance" class="text-3xl sm:text-4xl font-extrabold tracking-tight text-appTextPrimary">Rp 0</h1>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 pt-5 border-t border-appBorder">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-appIncomeBg text-appIncome flex items-center justify-center shrink-0">
+                <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <span class="text-xs text-appTextSecondary block">Pemasukan</span>
+                <span id="hero-total-income" class="text-sm sm:text-base font-bold text-appTextPrimary">+ Rp 0</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-appExpenseBg text-appExpense flex items-center justify-center shrink-0">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <span class="text-xs text-appTextSecondary block">Pengeluaran</span>
+                <span id="hero-total-expense" class="text-sm sm:text-base font-bold text-appTextPrimary">- Rp 0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-3">
+          <button onclick="openTxModal('Pengeluaran')" class="bg-appCard p-3.5 sm:p-4 rounded-card border border-appBorder shadow-appCard hover:border-appAccent transition-all flex flex-col items-center justify-center gap-2 group">
+            <div class="w-10 h-10 rounded-full bg-appBg text-appTextPrimary flex items-center justify-center group-hover:bg-appAccent group-hover:text-black transition-colors">
+              <i data-lucide="minus" class="w-5 h-5"></i>
+            </div>
+            <span class="text-xs font-semibold text-appTextPrimary">Keluar</span>
+          </button>
+
+          <button onclick="openTxModal('Pemasukan')" class="bg-appCard p-3.5 sm:p-4 rounded-card border border-appBorder shadow-appCard hover:border-appAccent transition-all flex flex-col items-center justify-center gap-2 group">
+            <div class="w-10 h-10 rounded-full bg-appBg text-appTextPrimary flex items-center justify-center group-hover:bg-appAccent group-hover:text-black transition-colors">
+              <i data-lucide="plus" class="w-5 h-5"></i>
+            </div>
+            <span class="text-xs font-semibold text-appTextPrimary">Masuk</span>
+          </button>
+
+          <button onclick="openTransferModal()" class="bg-appCard p-3.5 sm:p-4 rounded-card border border-appBorder shadow-appCard hover:border-appAccent transition-all flex flex-col items-center justify-center gap-2 group">
+            <div class="w-10 h-10 rounded-full bg-appBg text-appTextPrimary flex items-center justify-center group-hover:bg-appAccent group-hover:text-black transition-colors">
+              <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+            </div>
+            <span class="text-xs font-semibold text-appTextPrimary">Transfer</span>
+          </button>
+
+          <button onclick="switchTab('assets')" class="bg-appCard p-3.5 sm:p-4 rounded-card border border-appBorder shadow-appCard hover:border-appAccent transition-all flex flex-col items-center justify-center gap-2 group">
+            <div class="w-10 h-10 rounded-full bg-appBg text-appTextPrimary flex items-center justify-center group-hover:bg-appAccent group-hover:text-black transition-colors">
+              <i data-lucide="layers" class="w-5 h-5"></i>
+            </div>
+            <span class="text-xs font-semibold text-appTextPrimary">Aset</span>
+          </button>
+        </div>
+
+        <div class="bg-appCard p-5 sm:p-6 rounded-card border border-appBorder shadow-appCard">
+          <div class="flex items-start justify-between gap-4 mb-7">
+            <div class="min-w-0">
+              <span class="text-xs font-medium uppercase tracking-wider text-appTextSecondary">Cash Flow</span>
+              <h3 id="cashflow-total" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-appTextPrimary mt-1 truncate">Rp 0</h3>
+              <span id="cashflow-period" class="text-[11px] text-appTextMuted mt-0.5 block">7 hari terakhir</span>
+            </div>
+
+            <div class="flex items-center gap-1 p-1 bg-appBg rounded-pill border border-appBorder shrink-0">
+              <button onclick="setChartMode('daily')" id="chart-mode-daily" class="chart-mode-btn px-3 sm:px-4 py-1.5 rounded-pill text-[11px] font-bold transition-all active">Daily</button>
+              <button onclick="setChartMode('monthly')" id="chart-mode-monthly" class="chart-mode-btn px-3 sm:px-4 py-1.5 rounded-pill text-[11px] font-bold transition-all">Monthly</button>
+            </div>
+          </div>
+
+          <div class="flex gap-1.5 sm:gap-3">
+            <div id="chart-y-axis" class="relative w-9 sm:w-11 shrink-0 h-44 sm:h-52"></div>
+            <div id="chart-canvas" class="relative flex-1 h-44 sm:h-52">
+              <div id="chart-grid" class="absolute inset-0 pointer-events-none"></div>
+              <div id="chart-bars" class="absolute inset-0 flex items-end justify-between gap-1.5 sm:gap-3"></div>
+              <div id="chart-tooltip" class="chart-tooltip hidden absolute z-30 pointer-events-none opacity-0"></div>
+            </div>
+          </div>
+
+          <div class="flex gap-1.5 sm:gap-3 mt-3">
+            <div class="w-9 sm:w-11 shrink-0"></div>
+            <div id="chart-x-axis" class="flex-1 flex justify-between gap-1.5 sm:gap-3"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-transactions" class="view-panel hidden-panel space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-appTextPrimary">Riwayat Transaksi</h2>
+            <p class="text-xs text-appTextSecondary">Pantau dan kelola seluruh arus kas Anda</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="openTransferModal()" class="bg-appCard border border-appBorder hover:bg-appBg text-appTextPrimary font-semibold text-xs py-2.5 px-4 rounded-button transition-colors flex items-center gap-2">
+              <i data-lucide="arrow-left-right" class="w-4 h-4"></i> Transfer Aset
+            </button>
+            <button onclick="openTxModal()" class="inline-flex items-center justify-center gap-2 bg-appAccent hover:bg-appAccentHover text-black font-semibold text-xs py-2.5 px-4 rounded-button transition-all shadow-sm">
+              <i data-lucide="plus" class="w-4 h-4"></i> Tambah Transaksi
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 overflow-x-auto pb-2">
+          <button onclick="filterTransactions('semua')" id="filter-semua" class="tx-filter-btn active-filter px-4 py-2 rounded-pill text-xs font-semibold whitespace-nowrap transition-all bg-appTextPrimary text-appBg shadow-sm">Semua</button>
+          <button onclick="filterTransactions('Pemasukan')" id="filter-pemasukan" class="tx-filter-btn px-4 py-2 rounded-pill text-xs font-semibold whitespace-nowrap transition-all bg-appCard text-appTextSecondary hover:text-appTextPrimary border border-appBorder">Pemasukan</button>
+          <button onclick="filterTransactions('Pengeluaran')" id="filter-pengeluaran" class="tx-filter-btn px-4 py-2 rounded-pill text-xs font-semibold whitespace-nowrap transition-all bg-appCard text-appTextSecondary hover:text-appTextPrimary border border-appBorder">Pengeluaran</button>
+          <button onclick="filterTransactions('Transfer')" id="filter-transfer" class="tx-filter-btn px-4 py-2 rounded-pill text-xs font-semibold whitespace-nowrap transition-all bg-appCard text-appTextSecondary hover:text-appTextPrimary border border-appBorder">Transfer</button>
+        </div>
+
+        <div id="full-tx-list" class="space-y-3"></div>
+
+        <div id="tx-empty-state" class="hidden bg-appCard p-10 rounded-card border border-appBorder text-center my-6">
+          <div class="w-12 h-12 rounded-full bg-appBg text-appTextMuted flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="receipt" class="w-6 h-6"></i>
+          </div>
+          <h4 class="font-bold text-sm text-appTextPrimary mb-1">Belum Ada Transaksi</h4>
+          <p class="text-xs text-appTextSecondary mb-4 max-w-xs mx-auto">Mulai catat transaksi pertama Anda untuk memantau arus keuangan.</p>
+          <button onclick="openTxModal()" class="inline-flex items-center gap-2 bg-appAccent text-black font-semibold text-xs py-2.5 px-4 rounded-button">
+            <i data-lucide="plus" class="w-4 h-4"></i> Tambah Transaksi
+          </button>
+        </div>
+      </section>
+
+      <section id="view-assets" class="view-panel hidden-panel space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-appTextPrimary">Portofolio Aset</h2>
+            <p class="text-xs text-appTextSecondary">Kelola dan atur alokasi aset keuangan Anda</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="openTransferModal()" class="bg-appCard border border-appBorder hover:bg-appBg text-appTextPrimary font-semibold text-xs py-2.5 px-4 rounded-button transition-colors flex items-center gap-2">
+              <i data-lucide="arrow-left-right" class="w-4 h-4"></i> Transfer
+            </button>
+            <button onclick="openAssetModal()" class="bg-appAccent hover:bg-appAccentHover text-black font-semibold text-xs py-2.5 px-4 rounded-button transition-colors flex items-center gap-2 shadow-sm">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i> Tambah Aset
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-appCard p-6 rounded-card border border-appBorder shadow-appCard">
+          <span class="text-xs font-medium text-appTextSecondary uppercase tracking-wider">Total Nilai Aset Bersih</span>
+          <h3 id="assets-total-val" class="text-3xl font-extrabold tracking-tight text-appTextPrimary mt-1">Rp 0</h3>
+        </div>
+
+        <div id="assets-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </section>
+
+      <section id="view-statistics" class="view-panel hidden-panel space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-appTextPrimary">Laporan & Cashflow</h2>
+            <p class="text-xs text-appTextSecondary">Analisis catatan arus kas dan statistik keuangan Anda</p>
+          </div>
+        </div>
+
+        <div class="bg-appCard p-4 rounded-card border border-appBorder shadow-appCard space-y-3">
+          <span class="text-xs font-semibold text-appTextSecondary block">Pilih Rentang / Periode Analisis:</span>
+          
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+            <button onclick="setTimeframeMode('today')" id="tfm-today" class="tfm-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-appTextPrimary text-appBg shadow-sm whitespace-nowrap">Hari Ini</button>
+            <button onclick="setTimeframeMode('custom_date')" id="tfm-custom_date" class="tfm-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-appBg text-appTextSecondary hover:text-appTextPrimary whitespace-nowrap">Pilih Tanggal</button>
+            <button onclick="setTimeframeMode('month')" id="tfm-month" class="tfm-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-appBg text-appTextSecondary hover:text-appTextPrimary whitespace-nowrap">Bulanan</button>
+            <button onclick="setTimeframeMode('30days')" id="tfm-30days" class="tfm-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-appBg text-appTextSecondary hover:text-appTextPrimary whitespace-nowrap">30 Hari</button>
+            <button onclick="setTimeframeMode('90days')" id="tfm-90days" class="tfm-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-appBg text-appTextSecondary hover:text-appTextPrimary whitespace-nowrap">90 Hari</button>
+          </div>
+
+          <div id="picker-container-date" class="hidden pt-2 border-t border-appBorder flex items-center gap-2">
+            <label class="text-xs font-medium text-appTextSecondary">Pilih Tanggal Spesifik:</label>
+            <input type="date" id="stat-input-date" onchange="renderStatistics()" class="bg-appBg border border-appBorder rounded-button py-1.5 px-3 text-xs font-semibold text-appTextPrimary focus:outline-none focus:border-appTextPrimary" />
+          </div>
+
+          <div id="picker-container-month" class="hidden pt-2 border-t border-appBorder flex items-center gap-2">
+            <label class="text-xs font-medium text-appTextSecondary">Pilih Bulan & Tahun:</label>
+            <input type="month" id="stat-input-month" onchange="renderStatistics()" class="bg-appBg border border-appBorder rounded-button py-1.5 px-3 text-xs font-semibold text-appTextPrimary focus:outline-none focus:border-appTextPrimary" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+          <div class="bg-appCard p-5 rounded-card border border-appBorder shadow-appCard">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-appTextSecondary">Pemasukan</span>
+              <div class="w-7 h-7 rounded-full bg-appIncomeBg text-appIncome flex items-center justify-center">
+                <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <h3 id="stat-income" class="text-xl font-extrabold text-appIncome">+ Rp 0</h3>
+            <span class="text-[11px] text-appTextMuted mt-1 block">Total dana masuk</span>
+          </div>
+
+          <div class="bg-appCard p-5 rounded-card border border-appBorder shadow-appCard">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-appTextSecondary">Pengeluaran</span>
+              <div class="w-7 h-7 rounded-full bg-appExpenseBg text-appExpense flex items-center justify-center">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <h3 id="stat-expense" class="text-xl font-extrabold text-appExpense">- Rp 0</h3>
+            <span class="text-[11px] text-appTextMuted mt-1 block">Total dana keluar</span>
+          </div>
+
+          <div class="bg-appCard p-5 rounded-card border border-appBorder shadow-appCard">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-appTextSecondary">Selisih (Cashflow)</span>
+              <div class="w-7 h-7 rounded-full bg-appBg text-appTextPrimary flex items-center justify-center">
+                <i data-lucide="scale" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <h3 id="stat-net" class="text-xl font-extrabold text-appTextPrimary">Rp 0</h3>
+            <span class="text-[11px] text-appTextMuted mt-1 block">Hasil bersih (Pemasukan - Pengeluaran)</span>
+          </div>
+        </div>
+
+        <div class="bg-appCard p-6 rounded-card border border-appBorder shadow-appCard">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-base text-appTextPrimary">Rata-Rata Pemasukan</h3>
+              <p class="text-xs text-appTextSecondary">Estimasi rata-rata dana masuk berdasarkan riwayat data Anda</p>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-appIncomeBg text-appIncome flex items-center justify-center">
+              <i data-lucide="calculator" class="w-4 h-4"></i>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-appBg p-4 rounded-2xl border border-appBorder">
+              <span class="text-xs font-semibold text-appTextSecondary block mb-1">Rata-Rata Harian</span>
+              <h4 id="avg-income-daily" class="text-lg font-bold text-appIncome">Rp 0</h4>
+              <span class="text-[10px] text-appTextMuted mt-0.5 block">per hari</span>
+            </div>
+            <div class="bg-appBg p-4 rounded-2xl border border-appBorder">
+              <span class="text-xs font-semibold text-appTextSecondary block mb-1">Rata-Rata Bulanan</span>
+              <h4 id="avg-income-monthly" class="text-lg font-bold text-appIncome">Rp 0</h4>
+              <span class="text-[10px] text-appTextMuted mt-0.5 block">per bulan</span>
+            </div>
+            <div class="bg-appBg p-4 rounded-2xl border border-appBorder">
+              <span class="text-xs font-semibold text-appTextSecondary block mb-1">Rata-Rata Tahunan</span>
+              <h4 id="avg-income-yearly" class="text-lg font-bold text-appIncome">Rp 0</h4>
+              <span class="text-[10px] text-appTextMuted mt-0.5 block">per tahun</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-appCard p-6 rounded-card border border-appBorder shadow-appCard">
+          <h3 class="font-bold text-base text-appTextPrimary mb-1">Pengeluaran Berdasarkan Kategori</h3>
+          <p class="text-xs text-appTextSecondary mb-6">Rincian alokasi biaya pada periode terpilih</p>
+          <div id="category-stats-list" class="space-y-4"></div>
+        </div>
+      </section>
+
+      <section id="view-profile" class="view-panel hidden-panel space-y-6">
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight text-appTextPrimary">Profil & Pengaturan</h2>
+          <p class="text-xs text-appTextSecondary">Kelola akun, preferensi tampilan tema, dan data Anda</p>
+        </div>
+
+        <div class="bg-appCard p-6 rounded-card border border-appBorder shadow-appCard flex flex-col sm:flex-row items-center gap-5">
+          <img id="profile-page-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80" alt="Avatar" class="w-20 h-20 rounded-full object-cover border-4 border-appAccent shadow-md" />
+          <div class="text-center sm:text-left flex-1">
+            <h3 id="profile-page-name" class="text-xl font-bold text-appTextPrimary">Labib</h3>
+            <p id="profile-page-email" class="text-xs text-appTextSecondary mb-3">labib@example.com</p>
+            <button onclick="openEditProfileModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-appBg border border-appBorder rounded-pill text-xs font-semibold text-appTextPrimary hover:bg-appAccent hover:text-black transition-colors">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Profil
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-appCard p-6 rounded-card border border-appBorder shadow-appCard space-y-4">
+          <h3 class="font-bold text-base text-appTextPrimary">Tampilan & Tema</h3>
+          <div class="flex items-center justify-between p-4 bg-appBg rounded-button border border-appBorder">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-appCard flex items-center justify-center text-appTextPrimary">
+                <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+              </div>
+              <div>
+                <span class="text-sm font-semibold text-appTextPrimary block">Mode Gelap (Dark Mode)</span>
+                <span class="text-xs text-appTextSecondary">Atur tampilan ke tema terang atau gelap</span>
+              </div>
+            </div>
+            <button onclick="toggleDarkMode()" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-gray-300 dark:bg-appAccent focus:outline-none">
+              <span id="theme-toggle-dot" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0 dark:translate-x-5"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-appCard p-6 rounded-card border border-appBorder shadow-appCard space-y-4">
+          <h3 class="font-bold text-base text-appTextPrimary">Pengaturan Data</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button onclick="resetAllData()" class="w-full p-4 flex items-center justify-between bg-red-50 dark:bg-red-950/30 hover:bg-red-100 rounded-button text-left transition-colors border border-red-200 dark:border-red-900">
+              <div class="flex items-center gap-3">
+                <i data-lucide="rotate-ccw" class="w-5 h-5 text-red-600 dark:text-red-400"></i>
+                <div>
+                  <span class="text-sm font-semibold text-red-600 dark:text-red-400 block">Reset Semua Data</span>
+                  <span class="text-xs text-red-400 dark:text-red-500">Setel ulang saldo & transaksi ke 0</span>
+                </div>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-red-400"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-appCard/90 backdrop-blur-md border-t border-appBorder px-4 py-2 z-30 flex items-center justify-around shadow-floating">
+      <button onclick="switchTab('home')" id="nav-mobile-home" class="nav-mobile-btn active flex flex-col items-center gap-1 p-2 text-appTextPrimary">
+        <i data-lucide="layout-grid" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Beranda</span>
+      </button>
+      <button onclick="switchTab('transactions')" id="nav-mobile-transactions" class="nav-mobile-btn flex flex-col items-center gap-1 p-2 text-appTextMuted hover:text-appTextPrimary">
+        <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Transaksi</span>
+      </button>
+      <button onclick="openTxModal()" class="w-12 h-12 rounded-full bg-appAccent text-black flex items-center justify-center shadow-lg -mt-5 hover:scale-105 active:scale-95 transition-transform">
+        <i data-lucide="plus" class="w-6 h-6"></i>
+      </button>
+      <button onclick="switchTab('assets')" id="nav-mobile-assets" class="nav-mobile-btn flex flex-col items-center gap-1 p-2 text-appTextMuted hover:text-appTextPrimary">
+        <i data-lucide="wallet" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Aset</span>
+      </button>
+      <button onclick="switchTab('statistics')" id="nav-mobile-statistics" class="nav-mobile-btn flex flex-col items-center gap-1 p-2 text-appTextMuted hover:text-appTextPrimary">
+        <i data-lucide="pie-chart" class="w-5 h-5"></i>
+        <span class="text-[10px] font-medium">Statistik</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- MODAL 1: ADD TRANSAKSI -->
+  <div id="tx-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-appCard w-full sm:max-w-md rounded-t-card sm:rounded-card p-6 border border-appBorder shadow-floating transform translate-y-8 transition-transform duration-200">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-bold text-lg text-appTextPrimary">Tambah Transaksi</h3>
+        <button onclick="closeModal('tx-modal')" class="w-8 h-8 rounded-full bg-appBg flex items-center justify-center text-appTextSecondary hover:text-appTextPrimary transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 p-1 bg-appBg rounded-button mb-5">
+        <button type="button" onclick="setModalType('Pengeluaran')" id="btn-type-pengeluaran" class="py-2 text-xs font-bold rounded-xl transition-all bg-appCard text-appTextPrimary shadow-sm">Pengeluaran</button>
+        <button type="button" onclick="setModalType('Pemasukan')" id="btn-type-pemasukan" class="py-2 text-xs font-bold rounded-xl transition-all text-appTextSecondary">Pemasukan</button>
+      </div>
+
+      <form id="tx-form" onsubmit="handleAddTransaction(event)" class="space-y-4">
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Pilih Aset</label>
+          <select id="input-tx-asset" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors"></select>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Jumlah (Rp)</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-4 font-bold text-lg text-appTextMuted">Rp</span>
+            <input type="number" id="input-tx-amount" required placeholder="0" min="1" class="w-full bg-appBg border border-appBorder rounded-button py-3.5 pl-12 pr-4 font-extrabold text-xl text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Judul / Deskripsi</label>
+          <input type="text" id="input-tx-title" required placeholder="Cth: Belanja Mingguan" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors" />
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Kategori</label>
+          <select id="input-tx-category" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors">
+            <option value="Makanan & Minuman">Makanan & Minuman</option>
+            <option value="Gaji & Penghasilan">Gaji & Penghasilan</option>
+            <option value="Belanja">Belanja</option>
+            <option value="Tagihan & Listrik">Tagihan & Listrik</option>
+            <option value="Transportasi">Transportasi</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Tanggal</label>
+          <input type="date" id="input-tx-date" required class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors" />
+        </div>
+
+        <button type="submit" class="w-full bg-appAccent hover:bg-appAccentHover text-black font-bold text-sm py-3.5 px-4 rounded-button transition-all shadow-sm mt-2">Simpan Transaksi</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: TRANSFER -->
+  <div id="transfer-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-appCard w-full sm:max-w-md rounded-t-card sm:rounded-card p-6 border border-appBorder shadow-floating transform translate-y-8 transition-transform duration-200">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-bold text-lg text-appTextPrimary">Transfer Antar Aset</h3>
+        <button onclick="closeModal('transfer-modal')" class="w-8 h-8 rounded-full bg-appBg flex items-center justify-center text-appTextSecondary hover:text-appTextPrimary transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="transfer-form" onsubmit="handleTransfer(event)" class="space-y-4">
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Aset Asal</label>
+          <select id="transfer-from-asset" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors"></select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Aset Tujuan</label>
+          <select id="transfer-to-asset" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors"></select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Nominal Transfer (Rp)</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-4 font-bold text-lg text-appTextMuted">Rp</span>
+            <input type="number" id="transfer-amount" required placeholder="0" min="1" class="w-full bg-appBg border border-appBorder rounded-button py-3.5 pl-12 pr-4 font-extrabold text-xl text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors" />
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Catatan (Opsional)</label>
+          <input type="text" id="transfer-note" placeholder="Cth: Pindah dana tabungan" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors" />
+        </div>
+        <button type="submit" class="w-full bg-appAccent hover:bg-appAccentHover text-black font-bold text-sm py-3.5 px-4 rounded-button transition-all shadow-sm mt-2">Kirim Transfer</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: ASSET -->
+  <div id="asset-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-appCard w-full sm:max-w-md rounded-t-card sm:rounded-card p-6 border border-appBorder shadow-floating transform translate-y-8 transition-transform duration-200">
+      <div class="flex items-center justify-between mb-5">
+        <h3 id="asset-modal-title" class="font-bold text-lg text-appTextPrimary">Kelola Aset</h3>
+        <button onclick="closeModal('asset-modal')" class="w-8 h-8 rounded-full bg-appBg flex items-center justify-center text-appTextSecondary hover:text-appTextPrimary transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="asset-form" onsubmit="handleSaveAsset(event)" class="space-y-4">
+        <input type="hidden" id="asset-id" value="" />
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Nama Aset</label>
+          <input type="text" id="asset-name" required placeholder="Cth: Bank BCA / Reksa Dana" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Saldo Awal (Rp)</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-4 font-bold text-lg text-appTextMuted">Rp</span>
+            <input type="number" id="asset-balance" required placeholder="0" class="w-full bg-appBg border border-appBorder rounded-button py-3.5 pl-12 pr-4 font-extrabold text-xl text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors" />
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Ikon Aset</label>
+          <select id="asset-icon" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors">
+            <option value="building-2">Bank / Institusi</option>
+            <option value="wallet">Dompet / Tunai</option>
+            <option value="coins">Emas / Koin</option>
+            <option value="pie-chart">Investasi / Saham</option>
+            <option value="credit-card">Kartu Kredit / E-Wallet</option>
+          </select>
+        </div>
+        <button type="submit" class="w-full bg-appAccent hover:bg-appAccentHover text-black font-bold text-sm py-3.5 px-4 rounded-button transition-all shadow-sm mt-2">Simpan Aset</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: PROFILE -->
+  <div id="profile-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-appCard w-full sm:max-w-md rounded-t-card sm:rounded-card p-6 border border-appBorder shadow-floating transform translate-y-8 transition-transform duration-200">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-bold text-lg text-appTextPrimary">Edit Profil</h3>
+        <button onclick="closeModal('profile-modal')" class="w-8 h-8 rounded-full bg-appBg flex items-center justify-center text-appTextSecondary hover:text-appTextPrimary transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="profile-form" onsubmit="handleSaveProfile(event)" class="space-y-4">
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Unggah Foto Profil (Galeri)</label>
+          <input type="file" id="input-profile-file" accept="image/*" onchange="previewImage(event)" class="w-full bg-appBg border border-appBorder rounded-button py-2 px-3 text-xs text-appTextPrimary" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Nama Pengguna</label>
+          <input type="text" id="input-profile-name" required placeholder="Nama Anda" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-appTextSecondary block mb-1">Email</label>
+          <input type="email" id="input-profile-email" required placeholder="email@example.com" class="w-full bg-appBg border border-appBorder rounded-button py-3 px-4 text-sm text-appTextPrimary focus:outline-none focus:border-appTextPrimary transition-colors" />
+        </div>
+        <button type="submit" class="w-full bg-appAccent hover:bg-appAccentHover text-black font-bold text-sm py-3.5 px-4 rounded-button transition-all shadow-sm mt-2">Simpan Perubahan</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const defaultAssets = [
+      { id: 'ast-1', name: 'Rekening Bank (BCA)', balance: 0, icon: 'building-2' },
+      { id: 'ast-2', name: 'Uang Tunai', balance: 0, icon: 'wallet' },
+    ];
+
+    const defaultTransactions = [];
+
+    const defaultUserProfile = {
+      name: 'Labib',
+      email: 'labib@example.com',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80'
+    };
+
+    let assets = JSON.parse(localStorage.getItem('lumina_assets')) || defaultAssets;
+    let transactions = JSON.parse(localStorage.getItem('lumina_tx')) || defaultTransactions;
+    let userProfile = JSON.parse(localStorage.getItem('lumina_profile')) || defaultUserProfile;
+    let isDarkMode = JSON.parse(localStorage.getItem('lumina_darkmode')) || false;
+
+    let currentModalType = 'Pengeluaran';
+    let currentFilter = 'semua';
+    let currentTimeframeMode = 'today'; 
+    let tempAvatar = '';
+
+    /* ===== CHART STATE ===== */
+    let chartMode = 'daily';
+    let chartData = [];
+    let selectedBarIndex = null;
+    let chartBootstrapped = false;
+
+    const MONTH_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const MONTH_LONG  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+    /* ===== TIMEZONE-SAFE DATE HELPER ===== */
+    function getLocalDateStr(date = new Date()) {
+      const d = date;
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function saveData() {
+      localStorage.setItem('lumina_assets', JSON.stringify(assets));
+      localStorage.setItem('lumina_tx', JSON.stringify(transactions));
+      localStorage.setItem('lumina_profile', JSON.stringify(userProfile));
+      localStorage.setItem('lumina_darkmode', JSON.stringify(isDarkMode));
+    }
+
+    function formatRp(val) {
+      return 'Rp ' + Number(val || 0).toLocaleString('id-ID');
+    }
+
+    function initApp() {
+      applyTheme();
+
+      const todayStr = getLocalDateStr();
+      const monthStr = todayStr.substring(0, 7);
+
+      document.getElementById('input-tx-date').value = todayStr;
+      document.getElementById('stat-input-date').value = todayStr;
+      document.getElementById('stat-input-month').value = monthStr;
+
+      renderUserProfile();
+      renderCalculations();
+      renderAssets();
+      renderTransactions();
+      renderStatistics();
+      populateAssetDropdowns();
+      updateChartModeButtons();
+      renderCashflowChart();
+      lucide.createIcons();
+    }
+
+    function applyTheme() {
+      if (isDarkMode) document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    }
+
+    function toggleDarkMode() {
+      isDarkMode = !isDarkMode;
+      saveData();
+      applyTheme();
+      lucide.createIcons();
+    }
+
+    function renderUserProfile() {
+      document.getElementById('header-user-name').textContent = userProfile.name;
+      document.getElementById('user-avatar-header').src = userProfile.avatar;
+      document.getElementById('profile-page-name').textContent = userProfile.name;
+      document.getElementById('profile-page-email').textContent = userProfile.email;
+      document.getElementById('profile-page-avatar').src = userProfile.avatar;
+    }
+
+    function renderCalculations() {
+      let totalAssetBalance = assets.reduce((sum, a) => sum + a.balance, 0);
+      let income = 0;
+      let expense = 0;
+
+      transactions.forEach(t => {
+        if (t.type === 'Pemasukan') income += t.amount;
+        if (t.type === 'Pengeluaran') expense += t.amount;
+      });
+
+      document.getElementById('hero-total-balance').textContent = formatRp(totalAssetBalance);
+      document.getElementById('hero-total-income').textContent = '+ ' + formatRp(income);
+      document.getElementById('hero-total-expense').textContent = '- ' + formatRp(expense);
+      document.getElementById('assets-total-val').textContent = formatRp(totalAssetBalance);
+    }
+
+    function renderAssets() {
+      const grid = document.getElementById('assets-grid');
+      let total = assets.reduce((sum, a) => sum + a.balance, 0);
+
+      if (assets.length === 0) {
+        grid.innerHTML = `<p class="text-xs text-appTextMuted col-span-2 text-center py-4">Belum ada aset ditambahkan.</p>`;
+        return;
+      }
+
+      grid.innerHTML = assets.map(ast => {
+        let pct = total > 0 ? ((ast.balance / total) * 100).toFixed(1) : 0;
+        return `
+          <div class="bg-appCard p-5 rounded-card border border-appBorder shadow-appCard flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-appBg text-appTextPrimary flex items-center justify-center font-bold">
+                <i data-lucide="${ast.icon || 'wallet'}" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-sm text-appTextPrimary">${ast.name}</h4>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <button onclick="editAsset('${ast.id}')" class="text-[11px] text-blue-500 hover:underline">Edit</button>
+                  <span class="text-[10px] text-appTextMuted">•</span>
+                  <button onclick="deleteAsset('${ast.id}')" class="text-[11px] text-red-500 hover:underline">Hapus</button>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="font-bold text-sm text-appTextPrimary block">${formatRp(ast.balance)}</span>
+              <span class="text-[11px] font-medium text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-pill">${pct}%</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    /* ====================================================
+       RENDER TRANSAKSI + TOMBOL HAPUS
+       ==================================================== */
+    function renderTransactions() {
+      const fullContainer = document.getElementById('full-tx-list');
+      const emptyState = document.getElementById('tx-empty-state');
+
+      const filtered = transactions.filter(t => {
+        if (currentFilter === 'semua') return true;
+        return t.type.toLowerCase() === currentFilter.toLowerCase();
+      });
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+        fullContainer.innerHTML = '';
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      const createTxHtml = (tx) => {
+        const isIncome = tx.type === 'Pemasukan';
+        const isTransfer = tx.type === 'Transfer';
+        
+        let amountSign = isIncome ? '+' : '-';
+        let amountClass = isIncome ? 'text-appIncome' : 'text-appTextPrimary';
+        if (isTransfer) {
+          amountSign = '↔';
+          amountClass = 'text-blue-500';
+        }
+
+        const iconName = isIncome ? 'arrow-down-left' : (isTransfer ? 'arrow-left-right' : 'shopping-bag');
+
+        return `
+          <div class="bg-appCard p-4 rounded-card border border-appBorder shadow-appCard flex items-center justify-between gap-3 hover:border-gray-400 transition-all">
+            <div class="flex items-center gap-3.5 min-w-0 flex-1">
+              <div class="w-10 h-10 rounded-full bg-appBg text-appTextPrimary flex items-center justify-center shrink-0">
+                <i data-lucide="${iconName}" class="w-5 h-5"></i>
+              </div>
+              <div class="truncate">
+                <h4 class="font-bold text-sm text-appTextPrimary truncate">${tx.title}</h4>
+                <p class="text-xs text-appTextSecondary truncate">${tx.category}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <div class="text-right">
+                <span class="font-bold text-sm ${amountClass} block">${amountSign} ${formatRp(tx.amount)}</span>
+                <span class="text-[11px] text-appTextMuted">${tx.date}</span>
+              </div>
+              <button onclick="deleteTransaction(${tx.id})" title="Hapus transaksi" class="w-8 h-8 rounded-full bg-appBg hover:bg-red-100 dark:hover:bg-red-950/50 flex items-center justify-center text-appTextMuted hover:text-red-500 transition-colors shrink-0">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      };
+
+      fullContainer.innerHTML = filtered.map(createTxHtml).join('');
+      lucide.createIcons();
+    }
+
+    /* ====================================================
+       HAPUS TRANSAKSI — dengan pembalikan saldo aset
+       ==================================================== */
+    function deleteTransaction(id) {
+      const tx = transactions.find(t => t.id === id);
+      if (!tx) return;
+
+      if (!confirm(`Hapus transaksi "${tx.title}"?\n\nSaldo aset akan otomatis disesuaikan kembali.`)) return;
+
+      if (tx.type === 'Pemasukan') {
+        // Balikkan: kurangi saldo aset karena pemasukan dibatalkan
+        const ast = assets.find(a => a.id === tx.assetId);
+        if (ast) ast.balance -= tx.amount;
+      } else if (tx.type === 'Pengeluaran') {
+        // Balikkan: tambah saldo aset karena pengeluaran dibatalkan
+        const ast = assets.find(a => a.id === tx.assetId);
+        if (ast) ast.balance += tx.amount;
+      } else if (tx.type === 'Transfer') {
+        // Balikkan transfer jika asset ID tersimpan
+        if (tx.fromAssetId && tx.toAssetId) {
+          const fromAst = assets.find(a => a.id === tx.fromAssetId);
+          const toAst = assets.find(a => a.id === tx.toAssetId);
+          if (fromAst) fromAst.balance += tx.amount;
+          if (toAst) toAst.balance -= tx.amount;
+        } else {
+          alert('Transaksi transfer lama tidak dapat dikembalikan saldonya secara otomatis. Saldo aset tidak akan diubah.');
+        }
+      }
+
+      transactions = transactions.filter(t => t.id !== id);
+      saveData();
+      initApp();
+    }
+
+    /* ==========================================================
+       CASH FLOW CHART
+       ========================================================== */
+    function setChartMode(mode) {
+      if (chartMode === mode) return;
+      chartMode = mode;
+      selectedBarIndex = null;
+      updateChartModeButtons();
+      renderCashflowChart();
+    }
+
+    function updateChartModeButtons() {
+      const btnDaily = document.getElementById('chart-mode-daily');
+      const btnMonthly = document.getElementById('chart-mode-monthly');
+      if (!btnDaily || !btnMonthly) return;
+      btnDaily.classList.toggle('active', chartMode === 'daily');
+      btnMonthly.classList.toggle('active', chartMode === 'monthly');
+    }
+
+    function selectChartBar(index) {
+      selectedBarIndex = (selectedBarIndex === index) ? null : index;
+      renderCashflowChart();
+    }
+
+    function niceCeil(v) {
+      if (!v || v <= 0) return 0;
+      const exp = Math.floor(Math.log10(v));
+      const base = Math.pow(10, exp);
+      const n = v / base;
+      let m;
+      if (n <= 1) m = 1;
+      else if (n <= 1.5) m = 1.5;
+      else if (n <= 2) m = 2;
+      else if (n <= 2.5) m = 2.5;
+      else if (n <= 3) m = 3;
+      else if (n <= 4) m = 4;
+      else if (n <= 5) m = 5;
+      else if (n <= 7.5) m = 7.5;
+      else m = 10;
+      return m * base;
+    }
+
+    function fmtShort(v) {
+      const trim = (n) => (Math.round(n * 10) / 10).toString().replace('.', ',');
+      if (v >= 1e9) return trim(v / 1e9) + 'M';
+      if (v >= 1e6) return trim(v / 1e6) + 'jt';
+      if (v >= 1e3) return trim(v / 1e3) + 'rb';
+      return String(Math.round(v));
+    }
+
+    function buildChartData(mode) {
+      const now = new Date();
+      const buckets = [];
+
+      const toLocalDateStr = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      };
+
+      if (mode === 'daily') {
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          const key = toLocalDateStr(d);
+          buckets.push({
+            label: `${d.getDate()}`,
+            title: `${d.getDate()} ${MONTH_LONG[d.getMonth()]} ${d.getFullYear()}`,
+            match: (t) => (t.date || '').startsWith(key)
+          });
+        }
+      } else if (mode === 'monthly') {
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          buckets.push({
+            label: MONTH_SHORT[d.getMonth()],
+            title: `${MONTH_LONG[d.getMonth()]} ${d.getFullYear()}`,
+            match: (t) => (t.date || '').startsWith(key)
+          });
+        }
+      }
+
+      return buckets.map(b => {
+        let inflow = 0;
+        let outflow = 0;
+        transactions.forEach(t => {
+          if (!b.match(t)) return;
+          if (t.type === 'Pemasukan') inflow += t.amount;
+          else if (t.type === 'Pengeluaran') outflow += t.amount;
+        });
+        return { label: b.label, title: b.title, inflow, outflow, cashflow: inflow - outflow };
+      });
+    }
+
+    function renderCashflowChart() {
+      const barsEl = document.getElementById('chart-bars');
+      const xAxisEl = document.getElementById('chart-x-axis');
+      const yAxisEl = document.getElementById('chart-y-axis');
+      const gridEl = document.getElementById('chart-grid');
+      const totalEl = document.getElementById('cashflow-total');
+      const periodEl = document.getElementById('cashflow-period');
+      if (!barsEl) return;
+
+      chartData = buildChartData(chartMode);
+
+      if (!chartBootstrapped && chartData.some(d => d.cashflow !== 0)) {
+        for (let i = chartData.length - 1; i >= 0; i--) {
+          if (chartData[i].cashflow !== 0) { selectedBarIndex = i; break; }
+        }
+        chartBootstrapped = true;
+      }
+
+      const total = chartData.reduce((s, d) => s + d.cashflow, 0);
+      totalEl.textContent = (total < 0 ? '- ' : '') + formatRp(Math.abs(total));
+      totalEl.className = 'text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 truncate ' +
+        (total < 0 ? 'text-appExpense' : 'text-appTextPrimary');
+      periodEl.textContent = chartMode === 'daily' ? '7 hari terakhir' : '7 bulan terakhir';
+
+      const maxVal = Math.max(...chartData.map(d => Math.max(0, d.cashflow)), 0);
+      let step = niceCeil(maxVal / 4);
+      if (!step) step = 25000;
+      const top = step * 4;
+
+      gridEl.innerHTML = [0, 1, 2, 3, 4].map(i =>
+        `<div class="absolute left-0 right-0 border-t border-appBorder" style="bottom:${i * 25}%"></div>`
+      ).join('');
+
+      yAxisEl.innerHTML = [0, 1, 2, 3, 4].map(i => {
+        const v = (top * i) / 4;
+        return `<span class="absolute right-0 text-[10px] font-medium text-appTextMuted leading-none"
+                      style="bottom:${i * 25}%; transform: translateY(50%);">${fmtShort(v)}</span>`;
+      }).join('');
+
+      barsEl.innerHTML = chartData.map((d, i) => {
+        const isActive = i === selectedBarIndex;
+        const isPositive = d.cashflow > 0;
+        const heightPct = isPositive ? Math.max((d.cashflow / top) * 100, 3) : 0;
+
+        const barClass = isPositive
+          ? (isActive ? 'chart-bar-active' : 'chart-bar-idle')
+          : 'chart-bar-empty';
+
+        const styleH = isPositive ? `height:${heightPct}%` : 'height:4px';
+
+        const marker = (isActive && isPositive) ? `
+          <span class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-[#0F5132] ring-[2.5px] ring-white shadow-md z-10"></span>
+          <span class="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-[1.5px] bg-white/60"></span>
+        ` : '';
+
+        return `
+          <div class="chart-col flex-1 h-full flex items-end cursor-pointer" onclick="selectChartBar(${i})">
+            <div class="chart-bar w-full relative rounded-t-2xl rounded-b-lg transition-all duration-500 ease-out ${barClass}" style="${styleH}">
+              ${marker}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      xAxisEl.innerHTML = chartData.map((d, i) =>
+        `<span class="flex-1 text-center text-[10px] font-bold transition-colors ${i === selectedBarIndex ? 'text-appTextPrimary' : 'text-appTextMuted'}">${d.label}</span>`
+      ).join('');
+
+      requestAnimationFrame(renderChartTooltip);
+      lucide.createIcons();
+    }
+
+    function renderChartTooltip() {
+      const tooltipEl = document.getElementById('chart-tooltip');
+      const canvasEl = document.getElementById('chart-canvas');
+      if (!tooltipEl || !canvasEl) return;
+
+      if (selectedBarIndex === null || !chartData[selectedBarIndex]) {
+        tooltipEl.classList.add('hidden', 'opacity-0');
+        return;
+      }
+
+      const d = chartData[selectedBarIndex];
+      const isNeg = d.cashflow < 0;
+
+      tooltipEl.innerHTML = `
+        <div class="text-[10px] font-medium text-white/45 mb-2 whitespace-nowrap">${d.title}</div>
+        <div class="flex items-center justify-between gap-6 text-[11px] mb-1.5">
+          <span class="text-white/55">Cashflow</span>
+          <span class="font-bold ${isNeg ? 'text-red-300' : 'text-white'}">${isNeg ? '-' : ''}${formatRp(Math.abs(d.cashflow))}</span>
+        </div>
+        <div class="flex items-center justify-between gap-6 text-[11px] mb-1.5">
+          <span class="text-white/55">Inflow</span>
+          <span class="font-semibold text-appAccent">${formatRp(d.inflow)}</span>
+        </div>
+        <div class="flex items-center justify-between gap-6 text-[11px]">
+          <span class="text-white/55">Outflow</span>
+          <span class="font-semibold text-rose-400">${formatRp(d.outflow)}</span>
+        </div>
+      `;
+
+      tooltipEl.classList.remove('hidden');
+
+      const col = document.querySelectorAll('#chart-bars .chart-col')[selectedBarIndex];
+      if (!col) return;
+      const bar = col.querySelector('.chart-bar');
+      const canvasRect = canvasEl.getBoundingClientRect();
+      const colRect = col.getBoundingClientRect();
+      const barRect = bar.getBoundingClientRect();
+
+      const tw = tooltipEl.offsetWidth;
+      const th = tooltipEl.offsetHeight;
+
+      let left = (colRect.left - canvasRect.left) + (colRect.width / 2) - (tw / 2);
+      left = Math.max(2, Math.min(left, canvasRect.width - tw - 2));
+      tooltipEl.style.left = left + 'px';
+
+      let bottom = (canvasRect.bottom - barRect.top) + 12;
+      if (bottom + th > canvasRect.height) bottom = canvasRect.height - th - 4;
+      bottom = Math.max(4, bottom);
+      tooltipEl.style.bottom = bottom + 'px';
+
+      requestAnimationFrame(() => tooltipEl.classList.remove('opacity-0'));
+    }
+
+    let chartResizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(chartResizeTimer);
+      chartResizeTimer = setTimeout(() => {
+        if (selectedBarIndex !== null) renderChartTooltip();
+      }, 120);
+    });
+
+    /* ==========================================================
+       SISA LOGIC
+       ========================================================== */
+    function setTimeframeMode(mode) {
+      currentTimeframeMode = mode;
+
+      document.querySelectorAll('.tfm-btn').forEach(btn => {
+        btn.classList.remove('bg-appTextPrimary', 'text-appBg', 'shadow-sm');
+        btn.classList.add('bg-appBg', 'text-appTextSecondary');
+      });
+
+      const activeBtn = document.getElementById(`tfm-${mode}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-appBg', 'text-appTextSecondary');
+        activeBtn.classList.add('bg-appTextPrimary', 'text-appBg', 'shadow-sm');
+      }
+
+      const pickerDate = document.getElementById('picker-container-date');
+      const pickerMonth = document.getElementById('picker-container-month');
+
+      if (mode === 'custom_date') {
+        pickerDate.classList.remove('hidden');
+        pickerMonth.classList.add('hidden');
+      } else if (mode === 'month') {
+        pickerDate.classList.add('hidden');
+        pickerMonth.classList.remove('hidden');
+      } else {
+        pickerDate.classList.add('hidden');
+        pickerMonth.classList.add('hidden');
+      }
+
+      renderStatistics();
+    }
+
+    function renderStatistics() {
+      const todayStr = getLocalDateStr();
+      const selectedDate = document.getElementById('stat-input-date').value || todayStr;
+      const selectedMonth = document.getElementById('stat-input-month').value || todayStr.substring(0, 7);
+
+      let filteredTx = transactions.filter(t => {
+        if (currentTimeframeMode === 'today') return t.date === todayStr;
+        if (currentTimeframeMode === 'custom_date') return t.date === selectedDate;
+        if (currentTimeframeMode === 'month') return t.date.startsWith(selectedMonth);
+        if (currentTimeframeMode === '30days' || currentTimeframeMode === '90days') {
+          const limitDays = currentTimeframeMode === '30days' ? 30 : 90;
+          const txDate = new Date(t.date);
+          const now = new Date();
+          const diffTime = Math.abs(now - txDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return diffDays <= limitDays;
+        }
+        return true;
+      });
+
+      let income = 0;
+      let expense = 0;
+      let catMap = {};
+
+      filteredTx.forEach(t => {
+        if (t.type === 'Pemasukan') income += t.amount;
+        if (t.type === 'Pengeluaran') {
+          expense += t.amount;
+          catMap[t.category] = (catMap[t.category] || 0) + t.amount;
+        }
+      });
+
+      let netCashflow = income - expense;
+
+      document.getElementById('stat-income').textContent = '+ ' + formatRp(income);
+      document.getElementById('stat-expense').textContent = '- ' + formatRp(expense);
+      document.getElementById('stat-net').textContent = (netCashflow >= 0 ? '+ ' : '') + formatRp(netCashflow);
+
+      calculateAverageIncomes();
+
+      const statsContainer = document.getElementById('category-stats-list');
+      if (expense === 0) {
+        statsContainer.innerHTML = `<p class="text-xs text-appTextMuted text-center py-4">Tidak ada data pengeluaran pada periode ini.</p>`;
+        return;
+      }
+
+      statsContainer.innerHTML = Object.keys(catMap).map(cat => {
+        let amt = catMap[cat];
+        let pct = ((amt / expense) * 100).toFixed(0);
+        return `
+          <div>
+            <div class="flex justify-between items-center text-xs mb-1.5">
+              <span class="font-semibold text-appTextPrimary">${cat}</span>
+              <span class="font-bold text-appTextPrimary">${formatRp(amt)} <span class="text-appTextMuted font-normal">(${pct}%)</span></span>
+            </div>
+            <div class="w-full h-2 bg-appBg rounded-pill overflow-hidden">
+              <div class="h-full bg-appAccent rounded-pill" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function calculateAverageIncomes() {
+      const incomeTx = transactions.filter(t => t.type === 'Pemasukan');
+      
+      if (incomeTx.length === 0) {
+        document.getElementById('avg-income-daily').textContent = 'Rp 0';
+        document.getElementById('avg-income-monthly').textContent = 'Rp 0';
+        document.getElementById('avg-income-yearly').textContent = 'Rp 0';
+        return;
+      }
+
+      const totalIncome = incomeTx.reduce((sum, t) => sum + t.amount, 0);
+
+      const dates = incomeTx.map(t => new Date(t.date).getTime());
+      const minDate = new Date(Math.min(...dates));
+      const maxDate = new Date();
+      
+      const diffTime = Math.abs(maxDate - minDate);
+      const totalDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+      const totalMonths = Math.max(1, totalDays / 30);
+      const totalYears = Math.max(1, totalDays / 365);
+
+      document.getElementById('avg-income-daily').textContent = formatRp(Math.round(totalIncome / totalDays));
+      document.getElementById('avg-income-monthly').textContent = formatRp(Math.round(totalIncome / totalMonths));
+      document.getElementById('avg-income-yearly').textContent = formatRp(Math.round(totalIncome / totalYears));
+    }
+
+    function populateAssetDropdowns() {
+      const opts = assets.map(a => `<option value="${a.id}">${a.name} (${formatRp(a.balance)})</option>`).join('');
+      document.getElementById('input-tx-asset').innerHTML = opts;
+      document.getElementById('transfer-from-asset').innerHTML = opts;
+      document.getElementById('transfer-to-asset').innerHTML = opts;
+    }
+
+    function handleAddTransaction(e) {
+      e.preventDefault();
+      const assetId = document.getElementById('input-tx-asset').value;
+      const amount = parseFloat(document.getElementById('input-tx-amount').value);
+      const title = document.getElementById('input-tx-title').value;
+      const category = document.getElementById('input-tx-category').value;
+      const date = document.getElementById('input-tx-date').value;
+
+      const targetAsset = assets.find(a => a.id === assetId);
+      if (!targetAsset) return;
+
+      if (currentModalType === 'Pengeluaran' && targetAsset.balance < amount) {
+        alert('Saldo aset tidak mencukupi!');
+        return;
+      }
+
+      if (currentModalType === 'Pengeluaran') targetAsset.balance -= amount;
+      if (currentModalType === 'Pemasukan') targetAsset.balance += amount;
+
+      transactions.unshift({
+        id: Date.now(),
+        title,
+        category,
+        type: currentModalType,
+        amount,
+        date,
+        assetId
+      });
+
+      saveData();
+      initApp();
+      closeModal('tx-modal');
+    }
+
+    function handleTransfer(e) {
+      e.preventDefault();
+      const fromId = document.getElementById('transfer-from-asset').value;
+      const toId = document.getElementById('transfer-to-asset').value;
+      const amount = parseFloat(document.getElementById('transfer-amount').value);
+      const note = document.getElementById('transfer-note').value || 'Transfer Antar Aset';
+
+      if (fromId === toId) {
+        alert('Aset asal dan tujuan tidak boleh sama!');
+        return;
+      }
+
+      const fromAsset = assets.find(a => a.id === fromId);
+      const toAsset = assets.find(a => a.id === toId);
+
+      if (fromAsset.balance < amount) {
+        alert('Saldo aset asal tidak mencukupi!');
+        return;
+      }
+
+      fromAsset.balance -= amount;
+      toAsset.balance += amount;
+
+      // Simpan fromAssetId & toAssetId agar bisa di-reverse saat dihapus
+      transactions.unshift({
+        id: Date.now(),
+        title: `Transfer: ${fromAsset.name} ➔ ${toAsset.name}`,
+        category: note,
+        type: 'Transfer',
+        amount,
+        date: getLocalDateStr(),
+        fromAssetId: fromId,
+        toAssetId: toId
+      });
+
+      saveData();
+      initApp();
+      closeModal('transfer-modal');
+    }
+
+    function openAssetModal() {
+      document.getElementById('asset-id').value = '';
+      document.getElementById('asset-name').value = '';
+      document.getElementById('asset-balance').value = '';
+      document.getElementById('asset-modal-title').textContent = 'Tambah Aset';
+      openModal('asset-modal');
+    }
+
+    function editAsset(id) {
+      const ast = assets.find(a => a.id === id);
+      if (!ast) return;
+      document.getElementById('asset-id').value = ast.id;
+      document.getElementById('asset-name').value = ast.name;
+      document.getElementById('asset-balance').value = ast.balance;
+      document.getElementById('asset-icon').value = ast.icon || 'wallet';
+      document.getElementById('asset-modal-title').textContent = 'Edit Aset';
+      openModal('asset-modal');
+    }
+
+    function handleSaveAsset(e) {
+      e.preventDefault();
+      const id = document.getElementById('asset-id').value;
+      const name = document.getElementById('asset-name').value;
+      const balance = parseFloat(document.getElementById('asset-balance').value);
+      const icon = document.getElementById('asset-icon').value;
+
+      if (id) {
+        const ast = assets.find(a => a.id === id);
+        if (ast) {
+          ast.name = name;
+          ast.balance = balance;
+          ast.icon = icon;
+        }
+      } else {
+        assets.push({ id: 'ast-' + Date.now(), name, balance, icon });
+      }
+
+      saveData();
+      initApp();
+      closeModal('asset-modal');
+    }
+
+    function deleteAsset(id) {
+      if (confirm('Apakah Anda yakin ingin menghapus aset ini?')) {
+        assets = assets.filter(a => a.id !== id);
+        saveData();
+        initApp();
+      }
+    }
+
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) { tempAvatar = e.target.result; }
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function handleSaveProfile(e) {
+      e.preventDefault();
+      userProfile.name = document.getElementById('input-profile-name').value;
+      userProfile.email = document.getElementById('input-profile-email').value;
+      if (tempAvatar) userProfile.avatar = tempAvatar;
+
+      saveData();
+      renderUserProfile();
+      closeModal('profile-modal');
+    }
+
+    function resetAllData() {
+      if (confirm('Apakah Anda YAKIN ingin meriset semua data? Semua transaksi akan dihapus dan semua saldo aset menjadi Rp 0.')) {
+        transactions = [];
+        assets.forEach(a => a.balance = 0);
+        selectedBarIndex = null;
+        chartBootstrapped = false;
+        saveData();
+        initApp();
+        alert('Semua data transaksi dan saldo aset berhasil diriset menjadi Nol.');
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-panel').forEach(panel => {
+        panel.classList.remove('active-panel');
+        panel.classList.add('hidden-panel');
+      });
+
+      const target = document.getElementById(`view-${tabId}`);
+      if (target) {
+        target.classList.remove('hidden-panel');
+        target.classList.add('active-panel');
+      }
+
+      document.querySelectorAll('.nav-desktop-btn').forEach(btn => {
+        btn.classList.remove('bg-appAccent', 'text-black', 'font-semibold');
+        btn.classList.add('text-appTextSecondary');
+      });
+      const activeDesktopBtn = document.getElementById(`nav-desktop-${tabId}`);
+      if (activeDesktopBtn) {
+        activeDesktopBtn.classList.add('bg-appAccent', 'text-black', 'font-semibold');
+      }
+
+      document.querySelectorAll('.nav-mobile-btn').forEach(btn => {
+        btn.classList.remove('text-appTextPrimary');
+        btn.classList.add('text-appTextMuted');
+      });
+      const activeMobileBtn = document.getElementById(`nav-mobile-${tabId}`);
+      if (activeMobileBtn) {
+        activeMobileBtn.classList.add('text-appTextPrimary');
+      }
+
+      if (tabId === 'home') requestAnimationFrame(renderChartTooltip);
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function filterTransactions(type) {
+      currentFilter = type;
+      document.querySelectorAll('.tx-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-appTextPrimary', 'text-appBg');
+        btn.classList.add('bg-appCard', 'text-appTextSecondary');
+      });
+
+      const activeBtn = document.getElementById(`filter-${type.toLowerCase()}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-appTextPrimary', 'text-appBg');
+      }
+
+      renderTransactions();
+    }
+
+    function openTxModal(defaultType = 'Pengeluaran') {
+      setModalType(defaultType);
+      openModal('tx-modal');
+    }
+
+    function openTransferModal() { openModal('transfer-modal'); }
+    
+    function openEditProfileModal() {
+      document.getElementById('input-profile-name').value = userProfile.name;
+      document.getElementById('input-profile-email').value = userProfile.email;
+      tempAvatar = '';
+      openModal('profile-modal');
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modal.firstElementChild.classList.remove('translate-y-8');
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      modal.firstElementChild.classList.add('translate-y-8');
+    }
+
+    function setModalType(type) {
+      currentModalType = type;
+      const btnExp = document.getElementById('btn-type-pengeluaran');
+      const btnInc = document.getElementById('btn-type-pemasukan');
+
+      if (type === 'Pengeluaran') {
+        btnExp.className = 'py-2 text-xs font-bold rounded-xl transition-all bg-appCard text-appTextPrimary shadow-sm';
+        btnInc.className = 'py-2 text-xs font-bold rounded-xl transition-all text-appTextSecondary';
+      } else {
+        btnInc.className = 'py-2 text-xs font-bold rounded-xl transition-all bg-appCard text-appTextPrimary shadow-sm';
+        btnExp.className = 'py-2 text-xs font-bold rounded-xl transition-all text-appTextSecondary';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
